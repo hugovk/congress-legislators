@@ -15,6 +15,10 @@ script:
  - python test/are_files_linted.py
  - python test/validate.py
 
+after_script:
+ - pip install pep8
+ - pep8 .
+
 notifications:
   email:
     recipients:
