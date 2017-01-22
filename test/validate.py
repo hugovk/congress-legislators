@@ -1,6 +1,7 @@
 # Validate that the YAML files have sane data.
 
-import os, sys
+import os
+import sys
 from datetime import date, datetime
 
 import rtyaml
@@ -9,6 +10,8 @@ sys.path.insert(0, "scripts")
 import utils
 
 ok = True
+
+
 def error(message):
   global ok
   print(message)
@@ -26,7 +29,7 @@ state_apportionment = {
   'NM': 3, 'NY': 27, 'NC': 13, 'ND': 1, 'MP': 'T', 'OH': 16, 'OK': 5, 'OR': 5,
   'PA': 18, 'PR': 'T', 'RI': 2, 'SC': 7, 'SD': 1, 'TN': 9, 'TX': 36, 'UT': 4,
   'VT': 1, 'VI': 'T', 'VA': 11, 'WA': 10, 'WV': 3, 'WI': 8, 'WY': 1
-  }
+}
 
 # id types that must be present on every legislator record
 id_required = ['bioguide', 'govtrack']
@@ -56,10 +59,11 @@ id_types = {
 }
 
 # name keys
-name_keys = { "first", "middle", "nickname", "last", "suffix", "official_full" }
+name_keys = {"first", "middle", "nickname", "last", "suffix", "official_full"}
 
 # bio keys
-bio_keys = { "gender", "birthday", "religion" }
+bio_keys = {"gender", "birthday", "religion"}
+
 
 # get today as a date instance
 def now():
@@ -70,6 +74,7 @@ def now():
     return date(*[int(v) for v in os.environ['NOW'].split('-')])
   return datetime.now().date()
 now = now()
+
 
 def check_legislators_file(fn, seen_ids, current=None, current_mocs=None):
   # Open and iterate over the entries.
@@ -109,7 +114,7 @@ def check_legislators_file(fn, seen_ids, current=None, current_mocs=None):
       prev_term = None
       for i, term in enumerate(legislator["terms"]):
         check_term(term, prev_term,
-          current=(current and i==len(legislator["terms"])-1),
+          current=(current and i == len(legislator["terms"]) - 1),
           current_mocs=current_mocs)
         prev_term = term
 
@@ -118,7 +123,7 @@ def check_legislators_file(fn, seen_ids, current=None, current_mocs=None):
       # All of these fields must be strings.
       for key, value in role.items():
         if not isinstance(value, str):
-          error(rtyaml.dump({ key: value }) + " has an invalid data type.")
+          error(rtyaml.dump({key: value}) + " has an invalid data type.")
 
       # Check required fields.
       if "title" not in role:
@@ -138,22 +143,24 @@ def check_legislators_file(fn, seen_ids, current=None, current_mocs=None):
         if start and end and end < start:
           error(rtyaml.dump(role) + " has end before start.")
 
+
 def check_id_types(legislator, seen_ids, is_legislator):
   for key, value in legislator["id"].items():
     # Check that the id key is one we know about.
     if key not in id_types:
-      error(rtyaml.dump({ key: value }) + " is not a valid id.")
+      error(rtyaml.dump({key: value}) + " is not a valid id.")
 
     # Check that the data type is correct.
     elif not isinstance(value, id_types[key]):
-      error(rtyaml.dump({ key: value }) + " has an invalid data type.")
+      error(rtyaml.dump({key: value}) + " has an invalid data type.")
 
     else:
       # Check that the ID isn't duplicated across legislators.
       # Since some values are lists of IDs, check the elements.
       # Just make a list of ID occurrences here -- we'll check
       # uniqueness at the end.
-      if not isinstance(value, list): value = [value]
+      if not isinstance(value, list):
+        value = [value]
       for v in value:
         seen_ids.setdefault((key, v), []).append(legislator)
 
@@ -163,35 +170,38 @@ def check_id_types(legislator, seen_ids, is_legislator):
       if id_type not in legislator["id"]:
         error("Missing %s id in:\n%s" % (id_type, rtyaml.dump(legislator['id'])))
 
+
 def check_name(name, is_other_names=False):
   # Check for required keys and data types of the values.
   for key, value in name.items():
     if key in ("start", "end") and is_other_names:
       if not isinstance(value, str):
-        error(rtyaml.dump({ key: value }) + " has an invalid data type.")
+        error(rtyaml.dump({key: value}) + " has an invalid data type.")
     elif key not in name_keys:
       error("%s is not a valid key in name." % key)
     elif key in ("first", "last"):
       # These are required.
       if not isinstance(value, str):
-        error(rtyaml.dump({ key: value }) + " has an invalid data type.")
+        error(rtyaml.dump({key: value}) + " has an invalid data type.")
     else:
       # These can be set explicitly to None, but maybe we should just remove
       # those keys then.
       if not isinstance(value, (str, type(None))):
-        error(rtyaml.dump({ key: value }) + " has an invalid data type.")
+        error(rtyaml.dump({key: value}) + " has an invalid data type.")
 
   # If a person as a first initial only, they should also have a middle name.
   # (GovTrack relies on this to generate name strings.)
   if isinstance(name.get("first"), str) and len(name["first"]) == 2 and name["first"].endswith(".") and not name.get("middle"):
         error(rtyaml.dump(name) + " is missing a middle name to go with its first initial.")
 
+
 def check_bio(bio):
   for key, value in bio.items():
     if key not in bio_keys:
       error("%s is not a valid key in bio." % key)
     elif not isinstance(value, str):
-      error(rtyaml.dump({ key: value }) + " has an invalid data type.")
+      error(rtyaml.dump({key: value}) + " has an invalid data type.")
+
 
 def check_term(term, prev_term, current=None, current_mocs=None):
   # Check type.
@@ -207,7 +217,7 @@ def check_term(term, prev_term, current=None, current_mocs=None):
 
     # TODO: Remove 'and end > "2000-"'. I'm just adding it because
     # lots of historical data fails this test.
-    if prev_term and end > date(2000,1,1):
+    if prev_term and end > date(2000, 1, 1):
       prev_end = check_date(prev_term.get("end"))
       if prev_end:
         if start < prev_end:
@@ -250,13 +260,14 @@ def check_term(term, prev_term, current=None, current_mocs=None):
 
     # Check party of current members (historical is too difficult).
     if term.get("party") not in ("Republican", "Democrat", "Independent"):
-      error(rtyaml.dump({ "party": term.get("party") }) + " is invalid.")
+      error(rtyaml.dump({"party": term.get("party")}) + " is invalid.")
 
     # Check caucus of Independent members.
     if term.get("party") == "Independent" and term.get("caucus") not in ("Republican", "Democrat"):
-      error(rtyaml.dump({ "caucus": term.get("caucus") }) + " is invalid when party is Independent.")
+      error(rtyaml.dump({"caucus": term.get("caucus")}) + " is invalid when party is Independent.")
 
     # TODO: Check party_affiliations, url, and office information.
+
 
 def report_vacancies(current_mocs):
   for state, apportionment in state_apportionment.items():
@@ -271,10 +282,11 @@ def report_vacancies(current_mocs):
     if apportionment in ("T", 1):
       districts = [0]
     else:
-      districts = range(1, apportionment+1)
+      districts = range(1, apportionment + 1)
     for district in districts:
       if ("rep", state, district) not in current_mocs:
         print("Vacancy in", state, "district", district, ".")
+
 
 def check_executive_file(fn):
   # Open and iterate over the entries.
@@ -312,6 +324,7 @@ def check_executive_file(fn):
       for i, term in enumerate(person["terms"]):
         check_executive_term(term)
 
+
 def check_executive_term(term):
   # Check type.
   if term.get("type") not in ("prez", "viceprez"):
@@ -329,9 +342,11 @@ def check_executive_term(term):
       error(rtyaml.dump(term) + " has end before start.")
 
   if end.year > 2000:
-    # Check party of current members (historical is too difficult and even recent ones incorrectly have Democratic instead of Democrat, which is inconsistent with the legislators files).
+    # Check party of current members (historical is too difficult and even
+    # recent ones incorrectly have Democratic instead of Democrat, which is
+    # inconsistent with the legislators files).
     if term.get("party") not in ("Republican", "Democrat"):
-      error(rtyaml.dump({ "party": term.get("party") }) + " is invalid.")
+      error(rtyaml.dump({"party": term.get("party")}) + " is invalid.")
 
 
 def check_date(d):
@@ -344,6 +359,7 @@ def check_date(d):
     error(d + ": " + str(e))
     return None
 
+
 def check_id_uniqueness(seen_ids):
   for (id_type, id_value), occurrences in seen_ids.items():
     if len(occurrences) > 1:
@@ -352,11 +368,13 @@ def check_id_uniqueness(seen_ids):
 
 if __name__ == "__main__":
   # Check the legislators files.
-  seen_ids = { }
+  seen_ids = {}
   current_mocs = set()
-  check_legislators_file("legislators-current.yaml", seen_ids, current=True, current_mocs=current_mocs)
+  check_legislators_file("legislators-current.yaml", seen_ids, current=True,
+                         current_mocs=current_mocs)
   report_vacancies(current_mocs)
-  check_legislators_file("legislators-historical.yaml", seen_ids, current=False)
+  check_legislators_file("legislators-historical.yaml", seen_ids,
+                         current=False)
   check_executive_file("executive.yaml")
   check_id_uniqueness(seen_ids)
 

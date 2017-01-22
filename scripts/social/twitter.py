@@ -1,7 +1,9 @@
 # Helpful functions for accessing Twitter
 import tweepy
-TWITTER_PROFILE_BATCH_SIZE = 100
 from math import ceil
+
+TWITTER_PROFILE_BATCH_SIZE = 100
+
 
 def get_api(access_token, access_token_secret, consumer_key, consumer_secret):
     """
@@ -19,11 +21,13 @@ def get_api(access_token, access_token_secret, consumer_key, consumer_secret):
     # create an API handler
     return tweepy.API(auth)
 
-def fetch_profiles(api, screen_names = [], ids = []):
+
+def fetch_profiles(api, screen_names=[], ids=[]):
     """
-    A wrapper method around tweepy.API.lookup_users that handles the batch lookup of
-      screen_names. Assuming number of screen_names < 10000, this should not typically
-      run afoul of API limits (i.e. it's a good enough hack for now)
+    A wrapper method around tweepy.API.lookup_users that handles the batch
+    lookup of screen_names. Assuming number of screen_names < 10000, this
+    should not typically run afoul of API limits (i.e. it's a good enough hack
+    for now)
 
     `api` is a tweepy.API handle
     `screen_names` is a list of twitter screen names
@@ -44,6 +48,6 @@ def fetch_profiles(api, screen_names = [], ids = []):
         except tweepy.error.TweepError as e:
             if e.response.status_code == 404:
                 pass
-            else: # some other error, raise the exception
+            else:  # some other error, raise the exception
                 raise e
     return profiles
